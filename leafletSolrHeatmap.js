@@ -163,8 +163,9 @@ L.SolrHeatmap = L.GeoJSON.extend({
     var diff = max-min;
     _this.eachLayer(function(layer) {
       var per = (layer.feature.properties.count-min)/diff;
+     // var per = (layer.feature.properties.count-min)/Math.log1p(diff);
       //var ratio = ((layer.feature.properties.count) / Math.log1p(_this.docsCount));
-      var ratio = per / Math.log1p(1);
+      var ratio = per; /// Math.log(per);
       layer.setStyle({
         fillColor: '#F00',
         fillOpacity: ratio,
