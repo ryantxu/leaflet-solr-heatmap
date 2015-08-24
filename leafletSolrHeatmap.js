@@ -22,10 +22,11 @@ L.SolrHeatmap = L.GeoJSON.extend({
   updateHeatmap: function(data) {
     var _this = this;
     _this.docsCount = data.response.numFound;
-    _this.facetHeatmap = {},
-      facetHeatmapArray = data.facet_counts.facet_heatmaps[this.options.field];
+    _this.docs = data.response.docs;
+    _this.facetHeatmap = {};
 
     // Convert array to an object
+    facetHeatmapArray = data.facet_counts.facet_heatmaps[this.options.field];
     $.each(facetHeatmapArray, function(index, value) {
       if ((index + 1) % 2 !== 0) {
         // Set object keys for even items
@@ -118,25 +119,47 @@ L.SolrHeatmap = L.GeoJSON.extend({
       maxClusterRadius: 140
     });
 
-    $.each(_this.facetHeatmap.counts_ints2D, function(row, value) {
-      if (value === null) {
-        return;
-      }
 
-      $.each(value, function(column, val) {
-        if (val === 0) {
+    if(_this.docs != null && _this.docs.length >= _this.docsCount) {
+      console.log('ALLL', _this.docs);
+
+
+      $.each(_this.docs, function(row, doc) {
+        var pt = new L.LatLng(doc.lat, doc.lng)
+        if(pt.lat) {
+          var name = "DOC:" + doc.id;
+
+          var marker = new L.Marker(pt, {count:1});
+          marker.bindPopup(name)
+          console.log("ADD", pt, doc, marker);
+          _this.clusterMarkers.addLayer(marker); 
+        }
+        else {
+          console.log('HYMMMM', pt, doc);
+        }
+      });
+    }
+    else {
+      $.each(_this.facetHeatmap.counts_ints2D, function(row, value) {
+        if (value === null) {
           return;
         }
 
-        var bounds = new L.latLngBounds([
-          [_this._minLat(row), _this._minLng(column)],
-          [_this._maxLat(row), _this._maxLng(column)]
-        ]);
-        _this.clusterMarkers.addLayer(new L.Marker(bounds.getCenter(), {
-          count: val
-        }).bindPopup(val.toString()));  // the popup on the final marker
+        $.each(value, function(column, val) {
+          if (val === 0) {
+            return;
+          }
+
+          var bounds = new L.latLngBounds([
+            [_this._minLat(row), _this._minLng(column)],
+            [_this._maxLat(row), _this._maxLng(column)]
+          ]);
+          _this.clusterMarkers.addLayer(new L.Marker(bounds.getCenter(), {
+            count: val
+          }).bindPopup(val.toString()));  // the popup on the final marker
+        });
       });
-    });
+    }
 
     map.addLayer(_this.clusterMarkers);
     _this._showRenderTime();
