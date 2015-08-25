@@ -6,7 +6,17 @@ var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.
 
 function onEachFeature(feature, layer) {
   var count = feature.properties.count.toString();
-  layer.bindPopup(count);
+  layer.bindPopup(count + "XXXX");
+
+  layer.on('mouseover', function(e){
+      console.log('OVER', feature, e);
+  });
+  layer.on('mouseout', function(e){
+      console.log('OUT', feature, e);
+  });
+  layer.on('click', function(e){
+      console.log('CLICK', feature, e);
+  });
 }
 
 // Create and add a solrHeatmap layer to the map

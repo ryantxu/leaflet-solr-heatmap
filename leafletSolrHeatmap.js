@@ -63,43 +63,45 @@ L.SolrHeatmap = L.GeoJSON.extend({
     var min = 100000;
     var max = 0;
 
-    $.each(_this.facetHeatmap.counts_ints2D, function(row, value) {
-      if (value === null) {
-        return;
-      }
-
-      $.each(value, function(column, val) {
-        if (val === 0) {
+    if(_this.facetHeatmap.counts_ints2D) {
+      $.each(_this.facetHeatmap.counts_ints2D, function(row, value) {
+        if (value === null) {
           return;
         }
-        if(val>max) {
-          max = val;
-        }
-        if(val<min) {
-          min = val;
-        }
 
-        var newFeature = {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [
-              [
-                [_this._minLng(column), _this._minLat(row)],
-                [_this._minLng(column), _this._maxLat(row)],
-                [_this._maxLng(column), _this._maxLat(row)],
-                [_this._maxLng(column), _this._minLat(row)],
-                [_this._minLng(column), _this._minLat(row)]
-              ]
-            ]
-          },
-          properties: {
-            count: val
+        $.each(value, function(column, val) {
+          if (val === 0) {
+            return;
           }
-        };
-        geojson.features.push(newFeature);
+          if(val>max) {
+            max = val;
+          }
+          if(val<min) {
+            min = val;
+          }
+
+          var newFeature = {
+            type: 'Feature',
+            geometry: {
+              type: 'Polygon',
+              coordinates: [
+                [
+                  [_this._minLng(column), _this._minLat(row)],
+                  [_this._minLng(column), _this._maxLat(row)],
+                  [_this._maxLng(column), _this._maxLat(row)],
+                  [_this._maxLng(column), _this._minLat(row)],
+                  [_this._minLng(column), _this._minLat(row)]
+                ]
+              ]
+            },
+            properties: {
+              count: val
+            }
+          };
+          geojson.features.push(newFeature);
+        });
       });
-    });
+    }
 
     _this.addData(geojson);
     _this._styleByCount(min,max);
@@ -188,11 +190,11 @@ L.SolrHeatmap = L.GeoJSON.extend({
       var per = (layer.feature.properties.count-min)/diff;
      // var per = (layer.feature.properties.count-min)/Math.log1p(diff);
       //var ratio = ((layer.feature.properties.count) / Math.log1p(_this.docsCount));
-      var ratio = per; /// Math.log(per);
+      var ratio = .3+(.7*per); /// Math.log(per);
       layer.setStyle({
         fillColor: '#F00',
         fillOpacity: ratio,
-        weight: 1
+        weight: 0
       });
     });
   },

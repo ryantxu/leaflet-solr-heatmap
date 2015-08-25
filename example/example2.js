@@ -4,9 +4,53 @@ var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
 }).addTo(map);
 
+var MyControl = L.Control.extend({
+    options: {
+        position: 'topright'
+    },
+
+
+    onAdd: function (map) {
+        // create the control container with a particular class name
+        this._container = L.DomUtil.create('div', 'my-custom-control');
+
+        this._container.innerHTML = 'hello';
+
+        return this._container;
+    }
+});
+var ctrl = new MyControl();
+
+map.addControl(ctrl);
+
 function onEachFeature(feature, layer) {
-  var count =  feature.properties.count.toString();
-  layer.bindPopup(count); // popup on the vector style
+  var count = feature.properties.count.toString();
+  
+  layer.on('mouseover', function(e){
+    console.log('OVER', layer);
+    layer.setStyle({weight:3})
+    ctrl._container.innerHTML = "OVER> "+count;
+  });
+  layer.on('mouseout', function(e){
+    layer.setStyle({weight:0})
+    ctrl._container.innerHTML = "";
+  });
+  layer.on('click', function(e){
+    console.log('CLICK', feature);
+    var sw = feature.geometry.coordinates[0][0];
+    var ne = feature.geometry.coordinates[0][2];
+
+    console.log('>>>', sw, ne);
+
+    var bounds = L.latLngBounds(
+      L.latLng(sw[1], sw[0]),
+      L.latLng(ne[1], ne[0]));
+
+    ctrl._container.innerHTML = "CLICK: "+bounds;
+
+    map.fitBounds(bounds);
+    console.log('>>>', bounds);
+  });
 }
 
 
