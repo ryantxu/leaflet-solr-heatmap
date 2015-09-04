@@ -1,8 +1,8 @@
 var map = L.map('map').setView([0, 0], 2);
 
-var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+var osm = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-}).addTo(map);
+});
 
 var MyControl = L.Control.extend({
     options: {
@@ -27,7 +27,7 @@ function onEachFeature(feature, layer) {
   var count = feature.properties.count.toString();
   
   layer.on('mouseover', function(e){
-    console.log('OVER', layer);
+   // console.log('OVER', layer);
     layer.setStyle({weight:3})
     ctrl._container.innerHTML = "OVER> "+count;
   });
@@ -46,7 +46,7 @@ function onEachFeature(feature, layer) {
       L.latLng(sw[1], sw[0]),
       L.latLng(ne[1], ne[0]));
 
-    ctrl._container.innerHTML = "CLICK: "+bounds;
+    ctrl._container.innerHTML = "";
 
     map.fitBounds(bounds);
     console.log('>>>', bounds);
@@ -69,11 +69,11 @@ var solrC = L.solrHeatmap({
 
   // Inherited from L.GeoJSON
   onEachFeature: onEachFeature
-}).addTo(map);
+});
 
 
 // Create and add a solrHeatmap layer to the map
-var solrG = L.solrHeatmap({
+var solrB = L.solrHeatmap({
   url: null, // don't auto-query
 
   // Solr field with geospatial data (should be type Spatial Recursive Prefix Tree)
@@ -87,12 +87,43 @@ var solrG = L.solrHeatmap({
 
   // Inherited from L.GeoJSON
   onEachFeature: onEachFeature
-}).addTo(map);
+});
 
 
+// Create and add a solrHeatmap layer to the map
+var solrG = new L.SolrHeatmapGL({
 
+  size: 'diameter-in-meters',
+
+  url: null, // don't auto-query
+
+  // Solr field with geospatial data (should be type Spatial Recursive Prefix Tree)
+  field: 'geo',
+
+  // don't query on move
+  doQuery: false
+});
+
+var baseMaps = {
+    "OSM": osm
+};
+
+var overlayMaps = {
+    "Cluster": solrC,
+    "Grid": solrB
+};
+
+L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+osm.addTo(map);
+solrC.addTo(map);
+solrB.addTo(map);
 
 function getData() {
+
+  solrC._clearLayers();
+  solrB._clearLayers();
+
 	var _this = this;
 	var startTime = Date.now();
 	$.ajax({
@@ -102,9 +133,9 @@ function getData() {
 	    q: '*:*',
 	    wt: 'json',
 	    facet: true,
-	    'facet.heatmap': solrG.options.field,
-	    'facet.heatmap.geom': solrG._mapViewToWkt(),
-	    fq: solrG.options.field + solrG._mapViewToEnvelope()
+	    'facet.heatmap': solrB.options.field,
+	    'facet.heatmap.geom': solrB._mapViewToWkt(),
+	    fq: solrB.options.field + solrB._mapViewToEnvelope()
 	  },
 	  jsonp: 'json.wrf',
 	  success: function(data) {
@@ -113,20 +144,20 @@ function getData() {
 	    _this.docsCount = data.response.numFound;
 	    $('#numDocs').html('Number of docs: ' + _this.docsCount);
 	    _this.renderStart = Date.now();
-	    
-	    solrG.updateHeatmap(data);
-	    solrC.updateHeatmap(data);
+
+      if( map.hasLayer(solrC) ) solrC.updateHeatmap(data);
+	    if( map.hasLayer(solrB) ) solrB.updateHeatmap(data);
+
+      //solrG.updateHeatmap(data);
 	  }
 	});
 }
 
+getData();
 
-  getData()
-  map.on('moveend', function() {
-    solrG._clearLayers();
-    solrC._clearLayers();
-    getData();
-  });
+map.on('moveend', getData );
+map.on('overlayadd', getData );
+map.on('overlayremove', getData );
 
 
 

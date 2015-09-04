@@ -42,14 +42,19 @@ L.SolrHeatmap = L.GeoJSON.extend({
 
   _clearLayers: function() {
     var _this = this;
+    try {
+          console.log("in _clear", _this.options.type, _this);
 
-    switch (_this.options.type) {
-      case 'geojsonGrid':
-        _this.clearLayers();
-        break;
-      case 'clusters':
-        _this.clusterMarkers.clearLayers();
-        break;
+      switch (_this.options.type) {
+        case 'geojsonGrid':
+          _this.clearLayers();
+          break;
+        case 'clusters':
+          _this.clusterMarkers.clearLayers();
+          break;
+      }
+    }catch(e) {
+      console.log('error clearing layers', this, e);
     }
   },
 
@@ -122,7 +127,7 @@ L.SolrHeatmap = L.GeoJSON.extend({
     });
 
 
-    if(_this.docs != null && _this.docs.length >= _this.docsCount) {
+    if(false) { //_this.docs != null && _this.docs.length >= _this.docsCount) {
       console.log('ALLL', _this.docs);
 
 
@@ -187,15 +192,17 @@ L.SolrHeatmap = L.GeoJSON.extend({
     var _this = this;
     var diff = max-min;
     _this.eachLayer(function(layer) {
-      var per = (layer.feature.properties.count-min)/diff;
-     // var per = (layer.feature.properties.count-min)/Math.log1p(diff);
-      //var ratio = ((layer.feature.properties.count) / Math.log1p(_this.docsCount));
-      var ratio = .3+(.7*per); /// Math.log(per);
-      layer.setStyle({
-        fillColor: '#F00',
-        fillOpacity: ratio,
-        weight: 0
-      });
+      if(layer && layer.feature && layer.feature.properties) {
+        var per = (layer.feature.properties.count-min)/diff;
+       // var per = (layer.feature.properties.count-min)/Math.log1p(diff);
+        //var ratio = ((layer.feature.properties.count) / Math.log1p(_this.docsCount));
+        var ratio = .3+(.7*per); /// Math.log(per);
+        layer.setStyle({
+          fillColor: '#F00',
+          fillOpacity: ratio,
+          weight: 0
+        });
+      }
     });
   },
 
