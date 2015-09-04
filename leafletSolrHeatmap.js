@@ -43,8 +43,6 @@ L.SolrHeatmap = L.GeoJSON.extend({
   _clearLayers: function() {
     var _this = this;
     try {
-          console.log("in _clear", _this.options.type, _this);
-
       switch (_this.options.type) {
         case 'geojsonGrid':
           _this.clearLayers();

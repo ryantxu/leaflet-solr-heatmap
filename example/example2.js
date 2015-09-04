@@ -29,7 +29,10 @@ function onEachFeature(feature, layer) {
   layer.on('mouseover', function(e){
    // console.log('OVER', layer);
     layer.setStyle({weight:3})
-    ctrl._container.innerHTML = "OVER> "+count;
+
+    var acres = count * 0.223;
+
+    ctrl._container.innerHTML = "OVER> "+ $.number(count) + " ~("+$.number(acres)+" acres)";
   });
   layer.on('mouseout', function(e){
     layer.setStyle({weight:0})
@@ -127,7 +130,7 @@ function getData() {
 	var _this = this;
 	var startTime = Date.now();
 	$.ajax({
-	  url: 'http://localhost:8080/solr/usgs/select',
+	  url: 'http://localhost:8080/solr/matrix/select',
 	  dataType: 'JSONP',
 	  data: {
 	    q: '*:*',
